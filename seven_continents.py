@@ -133,7 +133,7 @@ def generate_dist_cache(prefix, airports):
 	except:
 		pass
 	if entries < len(airports):
-		rebuild = raw_input("Cache is missing entries (%i vs %i), do you want to rebuild (y/n)? " % (entries, len(airports)))
+		rebuild = input("Cache is missing entries (%i vs %i), do you want to rebuild (y/n)? " % (entries, len(airports)))
 		if rebuild.lower() != 'y':
 			return
 		dist_cache = {}
@@ -141,7 +141,7 @@ def generate_dist_cache(prefix, airports):
 			dist_cache = load_dist_cache(prefix, airports)
 		except:
 			pass
-		print 'Rebuilding...'
+		print('Rebuilding...')
 		try:
 			last_update = time.time()
 			for i, src in enumerate(airports):
@@ -155,12 +155,12 @@ def generate_dist_cache(prefix, airports):
 				if time.time() - last_update > 5.0:
 					last_update = time.time()
 					pct = float(i) / len(airports) * 100.0
-					print "\t%.2f%% complete" % pct
+					print(f"\t{pct:.2f}% complete")
 		except KeyboardInterrupt:
 			pass
-		print "Writing cache to file..."
+		print("Writing cache to file...")
 		st = time.time()
-		with open(filepath, 'w') as cachefile:
+		with open(filepath, 'wb') as cachefile:
 			cachefile.write(struct.pack('h', len(dist_cache.keys())))
 			for key, val in dist_cache.items():
 				out = struct.pack('ih', int(key), len(val.keys()))
@@ -169,7 +169,8 @@ def generate_dist_cache(prefix, airports):
 				[args.extend((int(k), v)) for k, v in val.items()]
 				out += struct.pack(fmt, *args)
 				cachefile.write(out)
-		print "Done (%.2fs)" % (time.time() - st)
+		print(f"Done {(time.time() - st):.2f}")
+		#print "Done (%.2fs)" % (time.time() - st)
 		dist_cache = {}
 
 def load_dist_cache(prefix, airports):
@@ -178,15 +179,16 @@ def load_dist_cache(prefix, airports):
 	st = time.time()
 	ids = [airport['id'] for airport in airports]
 	with open(filepath, 'rb', 65536) as cachefile:
-		print "Loading distance cache..."
+		print("Loading distance cache...")
 		entries = struct.unpack('h', cachefile.read(2))[0]
-		for i in xrange(entries):
+		for i in range(entries):
 			src, dist_count = struct.unpack('ih', cachefile.read(6))
 			results = struct.unpack('if' * dist_count, cachefile.read(8 * dist_count))
 			if str(src) in ids:
 				dist_cache[str(src)] = dict(zip([str(dst) for dst in results[::2]], results[1::2]))
 	cached = len(dist_cache.keys())
-	print "Loaded distance cache in %.2fs, found %i entries." % (time.time() - st, cached)
+	print(f"Loaded distance cache in {(time.time() - st):.2f}, found {cached} entries.")
+	#print "Loaded distance cache in %.2fs, found %i entries." % (time.time() - st, cached)
 	return dist_cache
 	
 def get_dist(src, dst):
@@ -204,15 +206,15 @@ def get_dist_from_cache(dist_cache, src, dst):
 def load_data(args):
 	# Read data
 	prefix = args.data_path.rstrip('/')
-	with open('%s/runways.csv' % prefix, 'rb') as csvfile:
+	with open(f"{prefix}/runways.csv") as csvfile:
 		runways = list(csv.DictReader(csvfile, delimiter=',', quotechar='"'))
-	with open('%s/supplemental_runways.csv' % prefix, 'rb') as csvfile:
+	with open(f"{prefix}/supplemental_runways.csv") as csvfile:
 		runways.extend(list(csv.DictReader(csvfile, delimiter=',', quotechar='"')))
-	with open('%s/airports.csv' % prefix, 'rb') as csvfile:
+	with open(f"{prefix}/airports.csv") as csvfile:
 		airports = list(csv.DictReader(csvfile, delimiter=',', quotechar='"'))
-	with open('%s/supplemental_airports.csv' % prefix, 'rb') as csvfile:
+	with open(f"{prefix}/supplemental_airports.csv") as csvfile:
 		airports.extend(list(csv.DictReader(csvfile, delimiter=',', quotechar='"')))
-	with open('%s/countries.csv' % prefix, 'rb') as csvfile:
+	with open(f"{prefix}/countries.csv") as csvfile:
 		countries = list(csv.DictReader(csvfile, delimiter=',', quotechar='"'))
 
 	# Filter out runways that are too short or are not properly paved
@@ -245,7 +247,7 @@ def load_data(args):
 			iso_country = country_name_to_code[country_name]
 			blacklist_country_codes.append(iso_country)
 		except:
-			print "warning: country code not found for blacklisted country: %s" % country_name
+			print(f"warning: country code not found for blacklisted country: {country_name}")
 
 	# Geo-political overrides
 	geo_overrides = {}
@@ -254,7 +256,8 @@ def load_data(args):
 			iso_country = [country['code'] for country in countries if country['name'] == country_name][0]
 			geo_overrides[iso_country] = (current_continent, new_continent)
 		except:
-			print "warning: country code not found for blacklisted country: %s" % country_name
+			print(f"warning: country code not found for blacklisted country: {country_name}")
+
 	if args.disable_geo_overrides:
 		geo_overrides = {}
 
@@ -296,12 +299,11 @@ def load_data(args):
 		'all_airports_by_id': valid_airports_by_id,
 	}
 
-	print "Runway stats:"
-	print "\t%i total" % len(runways)
-	print "\t%i w/ length > %s ft and paved" % (len(valid_runways), plane['min_runway_length_ft'])
-	print "\t%i unique airports" % len(airport_ids)
-	print "\t%i airports after applying blacklist" % len(valid_airports)
-				
+	print("Runway stats:")
+	print(f"\t{len(runways)} total")
+	print(f"\t{len(valid_runways)} w/ length > {plane['min_runway_length_ft']} ft and paved")
+	print(f"\t{len(airport_ids)} unique airports")
+	print(f"\t{len(valid_airports)} airports after applying blacklist")
 	return data
 	
 def url_for_route(route, api_key):
@@ -319,7 +321,7 @@ def url_for_route(route, api_key):
 		'path': 'color:0x0000ff|weight:2|' + "|".join(coords),
 		'sensor': 'false'
 	}
-	url = base + urllib.urlencode(params)
+	url = base + urllib.parse.urlencode(params)
 	return url
 	
 def generate_ordered_sequences(waypoint_lists):
@@ -399,7 +401,7 @@ class Search(object):
 		return best_route, len(sequences)
 		
 	def setup_search(self):
-		print "Setting up search..."
+		print("Setting up search...")
 		airports = [random.choice(airports) for airports in self.data['hash_table'].values()]
 		airports += [self.get_airport_by_id(airport_id) for airport_id in self.args.start_from_airport_ids]
 		self.data['airports'] = airports
@@ -422,7 +424,7 @@ class Search(object):
 		start_time = time.time()
 		reshuffle_count = int(args.max_searches / args.geo_hash_shuffles)
 		
-		print "Running search..."
+		print("Running search...")
 		
 		try:
 			while search_count < args.max_searches:
@@ -455,14 +457,14 @@ class Search(object):
 					else:
 						hrs = 0.0
 					search_rate = (search_count - last_search_count) / 5.0
-					print "Searched %i routes (%i/s) and found %s valid routes (best is %.2f hrs)" % (search_count, search_rate, valid_route_count, hrs)
+					print(f"Searched {search_count} routes ({search_rate}/s) and found {valid_route_count} valid routes (best is {hrs:.2f} hrs)")
 					last_log_time = time.time()
 					last_search_count = search_count
 				
 				# Perodic shuffling
 				if search_count % reshuffle_count == 0:
 					self.setup_search()
-					print "Completed a batch of %s searches, reshuffled airports in each geo hash." % reshuffle_count
+					print(f"Completed a batch of {reshuffle_count} searches, reshuffled airports in each geo hash.")
 			
 				# There were no valid segments from last waypoint
 				if len(visited_continents) < 7:
@@ -490,18 +492,18 @@ class Search(object):
 		best_routes = routes
 	
 		if not self.args.disable_optimization:
-			print "Finished initial search in %.2fs, optimizing..." % elapsed_time
+			print(f"Finished initial search in {elapsed_time:.2f}, optimizing...")
 			optimized_routes = []
 			optimize_count = 0
 			for route in best_routes:
-				print "Optimizing %s" % route
+				print(f"Optimizing {route}")
 				best_route, count = self.optimize_route(route, self.args.optimization_radius_mi, self.args.optimization_max_searches)
 				optimized_routes.append(best_route)
 				optimize_count += count
 				old_dur = route.get_duration(data, args)
 				new_dur = best_route.get_duration(data, args)
 				delta = (old_dur - new_dur) / old_dur * 100.0
-				print "\tReduced route from %.2f to %.2f hrs after searching %s additional routes (%.2f%%)" % (old_dur, new_dur, count, delta)
+				print(f"Reduced route from {old_dur:.2f} to {new_dur:.2f} hrs after searching {count} additional routes ({delta:.2f}%)")
 			optimized_routes = self.sort_routes(optimized_routes)
 		else:
 			optimize_count = 0
@@ -652,7 +654,7 @@ if __name__ == "__main__":
 	args.start_from_airport_codes = [code.strip() for code in args.start_from_airport_codes.split(',') if code]
 	args.start_from_continent_codes = args.start_from_continent_codes.split(',')			
 	
-	print arg_summary(args)
+	print(arg_summary(args))
 	
 	# Load data from config files and process blacklists
 	data = load_data(args)
@@ -664,7 +666,7 @@ if __name__ == "__main__":
 			for airport in data['all_airports']:
 				if airport['ident'] == code:
 					args.start_from_airport_ids.append(airport['id'])
-	print "start_from_airport_ids: %s" % args.start_from_airport_ids
+	print(f"start_from_airport_ids: {args.start_from_airport_ids}")
 	
 	# Generate distance cache, if needed
 	generate_dist_cache(args.data_path.rstrip('/'), data['all_airports'])
@@ -674,10 +676,10 @@ if __name__ == "__main__":
 	results = search.run()
 	
 	# Attempt to open results webpage
-	print "Generating report..."
+	print("Generating report...")
 	data = generate_report(data, args, results)
 	try:
 		open(args.html_file, 'w').write(data)
-		print "Report written to %s" % args.html_file
+		print(f"Report written to {args.html_file}")
 	except:
-		print "Could not generate html file %s" % args.html_file
+		print(f"Could not generate html file {args.html_file}")
