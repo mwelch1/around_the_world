@@ -562,8 +562,9 @@ def generate_report(data, args, results):
 	out += "Showing top %i<br>" % min(args.num_best_routes, len(results['best_routes']))
 	for i, route in enumerate(results['best_routes']):
 		out += "<h3>Route #%i</h3>" % (i + 1)
-		out += "<img src='%s'>" % url_for_route(route, args.google_api_key)
-		out += "<br><br>"
+		if args.google_api_key:
+			out += "<img src='%s'>" % url_for_route(route, args.google_api_key)
+			out += "<br><br>"
 		last_airport = None
 		for i, airport in enumerate(route.waypoints):
 			seg_length = 0.0
